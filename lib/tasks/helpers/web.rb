@@ -415,7 +415,7 @@ module Task
            request = Net::HTTP::Options.new(uri.request_uri)
          elsif method == :trace
            request = Net::HTTP::Trace.new(uri.request_uri)
-           request.body = "intrigue"
+           request.body = "TRACE"
          end
          ### END VERBS
 
