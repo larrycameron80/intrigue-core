@@ -41,6 +41,11 @@ class Drupal8RestRce < BaseTask
 
       if result.body =~ /last_comment_timestamp/
         _log_good "VULNERABLE at #{vuln_uri}"
+
+        vulns = _get_entity_detail("vulns") || {}
+        vulns["CVE-2019-6340"] = {"vulnerable" => true}
+        _set_entity_detail("vulns",vulns)
+
         return
       end
 
@@ -56,7 +61,6 @@ class Drupal8RestRce < BaseTask
       if result.body =~ /Please try again later/
         _log "Not a vuln configuration?"
       end
-
 
       return nil if unknown_node_count > 10
     end
