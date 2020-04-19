@@ -13,6 +13,38 @@ module Services
 
   include Intrigue::Task::Web
 
+  def _open_and_read_text_from_tcp_socket(ip_address, port)
+    output = ""
+    begin
+      sockets = Array.new #select() requires an array
+      #fill the first index with a socket
+      sockets[0] = TCPSocket.open(ip_address, port)
+      iterations = 0
+      max_iterations = 20
+      while iterations < max_iterations # loop till we hit max iterations
+      _log "Reading from socket #{iterations}/#{max_iterations}"
+      # listen for a read, timeout 5
+      res = select(sockets, nil, nil, 5)
+        if res != nil  # a nil is a timeout and will break
+          break unless sockets[0]
+          output << "#{sockets[0].gets()}" # WARNING! THIS PRINTS NIL FOREVER on a server crash
+        else
+          sockets[0].close
+          break
+        end
+        iterations += 1
+      end
+    rescue Errno::ETIMEDOUT => e
+      _log_error "Unable to connect: #{e}"
+    rescue Errno::ECONNRESET => e
+      _log_error "Unable to connect: #{e}"
+    rescue SocketError => e
+      _log_error "Unable to connect: #{e}"
+    end
+  output.strip
+  end
+
+
   def _create_network_service_entity(ip_entity,port_num,protocol="tcp",generic_details={})
 
     # first, save the port details on the ip_entity
@@ -136,7 +168,7 @@ module Services
         service_specific_details = {}
         service = _map_tcp_port_to_name(port_num)
 
-        name = "#{h.name.strip}:#{port_num}"
+        name = "#{h.name.strip}:#{port_num}/#{protocol}"
 
         entity_details = {
           "scoped" => true, # always scope in
@@ -163,7 +195,7 @@ module Services
         service = _map_udp_port_to_name(port_num)
 
         # now we have all the details we need, create it
-        name = "#{h.name.strip}:#{port_num}"
+        name = "#{h.name.strip}:#{port_num}/#{protocol}"
 
         entity_details = {
           "scoped" => true, # always scope in

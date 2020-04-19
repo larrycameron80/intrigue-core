@@ -6,12 +6,24 @@ class NetworkService < Intrigue::Model::Entity
     {
       :name => "NetworkService",
       :description => "A Generic Network Service",
-      :user_creatable => false
+      :user_creatable => true,
+      :example => "8.8.8.8:53/udp"
     }
   end
 
   def validate_entity
-    name =~ /[\d\.\:]+:\d{1,5}/
+    name =~ /^[\d\.\:]+\:\d{1,5}\/(tcp|udp)$/
+  end
+
+  def transform!
+    
+    set_details({
+      "ip_address" => name.split(":").first,
+      "port" => name.split(":").last.split("/").first,
+      "protocol" => name.split(":").last.split("/").last  
+    })
+
+  true
   end
 
   def detail_string
